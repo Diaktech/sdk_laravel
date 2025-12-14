@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Client extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'unique_id',
+        'prenom',
+        'nom',
+        'telephone',
+        'adresse_ligne1',
+        'adresse_ligne2',
+        'code_postal',
+        'ville_id',
+        'pays_id',
+        'collecteur_principal_id',
+        'total_du',
+        'total_paye',
+        'volume_total_envoye',
+    ];
+
+    protected $casts = [
+        'total_du' => 'decimal:2',
+        'total_paye' => 'decimal:2',
+        'volume_total_envoye' => 'decimal:2',
+    ];
+
+    public function user()
+    {
+        return $this->morphOne(User::class, 'userable');
+    }
+
+    public function collecteurPrincipal()
+    {
+        return $this->belongsTo(Collecteur::class, 'collecteur_principal_id');
+    }
+
+    public function ville()
+    {
+        return $this->belongsTo(Ville::class);
+    }
+
+    public function pays()
+    {
+        return $this->belongsTo(Pays::class);
+    }
+}
