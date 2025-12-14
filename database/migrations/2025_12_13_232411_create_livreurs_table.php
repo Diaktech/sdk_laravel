@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('livreurs', function (Blueprint $table) {
             $table->id();
+            $table->string('unique_id')->unique(); // <-- AJOUTE CETTE LIGNE
+            $table->string('prenom');
+            $table->string('nom');
+            $table->string('telephone');
+            $table->string('type_vehicule')->nullable();
+            $table->boolean('peut_choisir_zones')->default(false);
             $table->timestamps();
         });
     }

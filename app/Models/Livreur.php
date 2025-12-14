@@ -26,4 +26,11 @@ class Livreur extends Model
     {
         return $this->morphOne(User::class, 'userable');
     }
+
+    // Relation avec zones (via affectations_zones qu'on créera plus tard)
+    public function zones()
+    {
+        return $this->belongsToMany(Zone::class, 'affectations_zones')
+                    ->withTimestamps();
+    }
 }
