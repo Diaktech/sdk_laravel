@@ -1,0 +1,125 @@
+/* public/css/collecteur/evenements-create.css */
+
+/* ==================== INDICATEURS D'ÉTAPES ==================== */
+.etape-indicator {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    background-color: #e5e7eb;  /* Couleur grise pour étape inactive */
+    color: #6b7280;             /* Texte gris */
+    border: 2px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Étape active */
+.etape-indicator.etape-active {
+    background-color: #3b82f6;  /* Bleu pour étape active */
+    color: white;
+    border-color: #3b82f6;
+}
+
+/* Hover sur étape inactive */
+.etape-indicator:hover:not(.etape-active) {
+    background-color: #d1d5db;  /* Gris plus foncé au survol */
+    border-color: #d1d5db;
+}
+
+/* ==================== CONTENU DES ÉTAPES ==================== */
+.etape-content {
+    display: none;              /* Masqué par défaut */
+}
+
+/* Étape active avec animation */
+.etape-content.etape-active {
+    display: block;
+    animation: fadeIn 0.3s ease-in;
+}
+
+/* Animation d'apparition */
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* ==================== BOUTONS DE NAVIGATION ==================== */
+.btn-precedent,
+.btn-suivant,
+.btn-valider {
+    transition: all 0.2s ease;
+    min-width: 140px;
+}
+
+/* Hover effect */
+.btn-precedent:hover,
+.btn-suivant:hover,
+.btn-valider:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ==================== BOUTONS FAMILLES (étape 2) ==================== */
+.btn-famille {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-famille:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Famille active */
+.btn-famille.active {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+/* ==================== BARRE DE PROGRESSION CAPACITÉ ==================== */
+/* Conteneur de la barre */
+.barre-progression-container {
+    background-color: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+/* Barre de progression elle-même */
+.barre-progression {
+    height: 0.625rem; /* h-2.5 */
+    border-radius: 9999px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Couleurs selon le pourcentage */
+.barre-progression.vert {
+    background-color: #10b981; /* green-500 */
+}
+
+.barre-progression.jaune {
+    background-color: #f59e0b; /* yellow-500 */
+}
+
+.barre-progression.rouge {
+    background-color: #ef4444; /* red-500 */
+}
+
+/* ==================== UTILITAIRES ==================== */
+.hidden {
+    display: none !important;
+}
+
+/* Pour les transitions smooth */
+.transition-all {
+    transition: all 0.3s ease;
+}

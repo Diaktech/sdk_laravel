@@ -23,7 +23,7 @@ Route::get('/dashboard', function (Request $request) {
         case 'gestionnaire':
             return redirect()->route('manager.dashboard');
         case 'collecteur':
-            return redirect()->route('collector.dashboard');
+            return redirect()->route('collecteur.dashboard');
         case 'livreur':
             return redirect()->route('delivery.dashboard');
         case 'client':
@@ -63,9 +63,9 @@ Route::get('/manager/dashboard', function () {
     return view('dashboards.manager');
 })->middleware(['auth', 'role:super_gestionnaire,gestionnaire'])->name('manager.dashboard');
 
-Route::get('/collector/dashboard', function () {
-    return view('dashboards.collector');
-})->middleware(['auth', 'role:collecteur'])->name('collector.dashboard');
+Route::get('/collecteur/dashboard', function () {
+    return view('dashboards.collecteur');
+})->middleware(['auth', 'role:collecteur'])->name('collecteur.dashboard');
 
 Route::get('/delivery/dashboard', function () {
     return view('dashboards.delivery');
@@ -74,6 +74,16 @@ Route::get('/delivery/dashboard', function () {
 Route::get('/client/dashboard', function () {
     return view('dashboards.client');
 })->middleware(['auth', 'role:client'])->name('client.dashboard');
+
+// ==================== ROUTES POUR LES ÉVÉNEMENTS DES COLLECTEURS ====================
+Route::middleware(['auth', 'role:collecteur'])->prefix('collecteur')->name('collecteur.')->group(function () {
+    Route::resource('evenements', \App\Http\Controllers\Collecteur\EvenementController::class)
+        ->only(['index', 'create', 'store', 'show']);
+});
+
+Route::get('/livreur/dashboard', function () {
+    return view('dashboards.livreur');
+})->middleware(['auth', 'role:livreur'])->name('livreur.dashboard');
 
 // ==================== ROUTES PROFIL (BREEZE) ====================
 Route::middleware('auth')->group(function () {
