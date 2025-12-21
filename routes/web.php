@@ -77,8 +77,18 @@ Route::get('/client/dashboard', function () {
 
 // ==================== ROUTES POUR LES ÉVÉNEMENTS DES COLLECTEURS ====================
 Route::middleware(['auth', 'role:collecteur'])->prefix('collecteur')->name('collecteur.')->group(function () {
-    Route::resource('evenements', \App\Http\Controllers\Collecteur\EvenementController::class)
+    // Routes pour les événements (EXISTANT)
+    Route::resource('evenements', \App\Http\Controllers\Collecteur\EvenementController::class) 
         ->only(['index', 'create', 'store', 'show']);
+    
+    // Recherche de clients (AJAX) - POUR LE FORMULAIRE DE PRISE EN CHARGE
+    Route::get('/clients/search', [\App\Http\Controllers\Collecteur\ClientController::class, 'search'])
+        ->name('clients.search');
+
+    // Destinataires d'un client (AJAX) - POUR LE FORMULAIRE DE PRISE EN CHARGE
+    Route::get('/clients/{client}/destinataires', [\App\Http\Controllers\Collecteur\ClientController::class, 'destinataires'])
+        ->name('clients.destinataires');
+    
 });
 
 Route::get('/livreur/dashboard', function () {

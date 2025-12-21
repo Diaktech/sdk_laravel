@@ -41,6 +41,11 @@ class Client extends Model
         return $this->belongsTo(Collecteur::class, 'collecteur_principal_id');
     }
 
+    public function destinataires()
+    {
+        return $this->hasMany(Destinataire::class, 'client_id');
+    }
+
     public function ville()
     {
         return $this->belongsTo(Ville::class);

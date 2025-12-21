@@ -59,7 +59,9 @@
                 </div>
             </div>
             
-            <!-- Sélection du client -->
+            <!-- =========================================== -->
+            <!-- NOUVELLE SECTION : RECHERCHE DE CLIENT     -->
+            <!-- =========================================== -->
             <div class="bg-purple-50 border border-purple-100 rounded-lg p-6">
                 <div class="flex items-center mb-4">
                     <div class="bg-purple-100 text-purple-800 rounded-lg p-2 mr-3">
@@ -70,73 +72,149 @@
                     <h4 class="text-lg font-semibold text-gray-800">Client (Expéditeur)</h4>
                 </div>
                 
-                <div class="mb-4">
-                    <label for="client_id" class="block text-sm font-medium text-gray-700 mb-2">
-                        Sélectionnez un client *
+                <!-- ==================== CHAMP DE RECHERCHE ==================== -->
+                <div class="mb-6">
+                    <label for="client_search" class="block text-sm font-medium text-gray-700 mb-2">
+                        Rechercher un client *
                     </label>
-                    <select name="client_id" id="client_id" required
-                            class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4">
-                        <option value="">-- Choisir un client --</option>
-                        @foreach($clients as $client)
-                            <option value="{{ $client->id }}">
-                                👤 {{ $client->prenom }} {{ $client->nom }}
-                                <span class="text-gray-600">({{ $client->unique_id }})</span>
-                            </option>
-                        @endforeach
-                    </select>
+                    
+                    <!-- Champ caché pour l'ID du client (pour le formulaire) -->
+                    <input type="hidden" id="client_id" name="client_id" value="">
+                    
+                    <!-- Champ de recherche visible -->
+                    <div class="relative">
+                        <input type="text" 
+                            id="client_search"
+                            class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 pr-10"
+                            placeholder="ID, téléphone, ou nom du client..."
+                            autocomplete="off"
+                            spellcheck="false">
+                        
+                        <!-- Icône de recherche -->
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Indicateur de saisie minimum -->
+                    <p class="mt-1 text-xs text-gray-500">
+                        Minimum 2 caractères. Tapez l'ID, téléphone, ou nom.
+                    </p>
                 </div>
                 
-                <!-- Bouton pour ajouter un nouveau client (optionnel) -->
-                <button type="button" 
-                        class="text-purple-600 hover:text-purple-800 text-sm flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Ajouter un nouveau client
-                </button>
+                <!-- ==================== RÉSULTATS DE RECHERCHE ==================== -->
+                <div id="client_results" class="hidden mb-4 border border-gray-200 rounded-lg bg-white shadow-sm max-h-60 overflow-y-auto">
+                    <!-- Les résultats seront injectés ici par JavaScript -->
+                </div>
+                
+                <!-- ==================== CLIENT SÉLECTIONNÉ (AFFICHAGE) ==================== -->
+                <div id="client_selected" class="hidden mb-4 p-4 bg-purple-100 border border-purple-200 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="font-semibold text-purple-900" id="selected_client_name">--</div>
+                            <div class="text-sm text-purple-700" id="selected_client_info">--</div>
+                        </div>
+                        <button type="button" 
+                                id="clear_client_btn"
+                                class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                            Changer
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- ==================== MESSAGE D'ÉTAT ==================== -->
+                <div id="client_message" class="hidden mb-4 p-3 text-sm rounded-lg">
+                    <!-- Messages: "Recherche en cours...", "Aucun client trouvé", etc. -->
+                </div>
+                
+                <!-- ==================== BOUTONS D'ACTION ==================== -->
+                <div class="flex justify-between items-center pt-4 border-t border-purple-100">
+                    <!-- Bouton pour ajouter un nouveau client -->
+                    <button type="button" 
+                            class="text-purple-600 hover:text-purple-800 text-sm flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Ajouter un nouveau client
+                    </button>
+                    
+                    <!-- Lien vers la liste complète des clients -->
+                    <!-- REMPLACER CETTE LIGNE : -->
+                    
+                    <a href="#" 
+                    class="text-gray-600 hover:text-gray-800 text-sm flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        Voir tous mes clients
+                    </a>
+                </div>
             </div>
+            <!-- =========================================== -->
+            <!-- FIN NOUVELLE SECTION                       -->
+            <!-- =========================================== -->
             
         </div>
         
         <!-- Colonne droite : Destinataire et Type de prise en charge -->
         <div class="space-y-8">
             
-            <!-- Sélection du destinataire -->
-            <div class="bg-green-50 border border-green-100 rounded-lg p-6">
-                <div class="flex items-center mb-4">
-                    <div class="bg-green-100 text-green-800 rounded-lg p-2 mr-3">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                        </svg>
-                    </div>
-                    <h4 class="text-lg font-semibold text-gray-800">Destinataire (Optionnel)</h4>
+            <!-- Sélection du destinataire (sera peuplée dynamiquement) -->
+        <div class="bg-green-50 border border-green-100 rounded-lg p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-green-100 text-green-800 rounded-lg p-2 mr-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
                 </div>
-                
+                <h4 class="text-lg font-semibold text-gray-800">Destinataire</h4>
+            </div>
+            
+            <!-- Ce div s'affichera quand un client sera sélectionné -->
+            <div id="destinataire-container" class="hidden">
                 <div class="mb-4">
                     <label for="destinataire_id" class="block text-sm font-medium text-gray-700 mb-2">
-                        Sélectionnez un destinataire
+                        Sélectionnez un destinataire *
                     </label>
+                    
+                    <!-- Indicateur de chargement -->
+                    <div id="destinataire-loading" class="hidden text-center py-4">
+                        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <span class="ml-2 text-gray-600">Chargement des destinataires...</span>
+                    </div>
+                    
+                    <!-- Select des destinataires (sera peuplé dynamiquement) -->
                     <select name="destinataire_id" id="destinataire_id"
-                            class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4">
+                            class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 hidden">
                         <option value="">-- Choisir un destinataire --</option>
-                        @foreach($destinataires as $destinataire)
-                            <option value="{{ $destinataire->id }}">
-                                📍 {{ $destinataire->prenom }} {{ $destinataire->nom }}
-                                <span class="text-gray-600">({{ $destinataire->code_unique }})</span>
-                            </option>
-                        @endforeach
                     </select>
+                    
+                    <!-- Message si aucun destinataire -->
+                    <div id="no-destinataires" class="hidden p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p class="text-yellow-800">
+                            <span class="font-semibold">⚠️ Attention :</span> 
+                            Ce client n'a aucun destinataire enregistré.
+                        </p>
+                        <button type="button" class="mt-2 text-blue-600 hover:text-blue-800 text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Ajouter un destinataire
+                        </button>
+                    </div>
                 </div>
-                
-                <!-- Bouton pour ajouter un nouveau destinataire -->
-                <button type="button" 
-                        class="text-green-600 hover:text-green-800 text-sm flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Ajouter un nouveau destinataire
-                </button>
             </div>
+            
+            <!-- Message initial (avant sélection client) -->
+            <div id="destinataire-initial" class="text-center py-8">
+            
+                <p class="text-gray-600">
+                    Sélectionnez d'abord un client pour afficher ses destinataires.
+                </p>
+            </div>
+        </div>
             
 
             <!-- Section conditionnelle : Affiche seulement si type_calcul = "poids" -->
@@ -218,47 +296,37 @@
         </div> <!-- Fermeture Colonne droite -->
     </div>
     
-    <!-- Résumé de l'étape 1 -->
-    <div class="mt-10 pt-6 border-t border-gray-200 bg-gray-50 rounded-lg p-6">
-        <h4 class="font-semibold text-gray-800 mb-3">Résumé de votre sélection :</h4>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="text-center p-4 bg-white rounded-lg border">
-                <div class="text-sm text-gray-600">Départ sélectionné</div>
-                <div id="resume-depart" class="font-semibold text-lg mt-1 text-gray-800">--</div>
+    <!-- ==================== RÉSUMÉ FINAL ==================== -->
+    <div class="mt-10 pt-6 border-t border-gray-200">
+        <h4 class="font-semibold text-gray-800 mb-6 text-lg">Résumé de votre sélection</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Départ -->
+            <div class="text-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div class="text-sm text-gray-600 mb-1">Départ</div>
+                <div id="resume-depart" class="font-semibold text-gray-800">--</div>
             </div>
-            <div class="text-center p-4 bg-white rounded-lg border">
-                <div class="text-sm text-gray-600">Client</div>
-                <div id="resume-client" class="font-semibold text-lg mt-1 text-gray-800">--</div>
+            
+            <!-- Client -->
+            <div class="text-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div class="text-sm text-gray-600 mb-1">Client</div>
+                <div id="resume-client" class="font-semibold text-gray-800">--</div>
             </div>
-            <div class="text-center p-4 bg-white rounded-lg border">
-                <div class="text-sm text-gray-600">Type</div>
-                <div id="resume-type" class="font-semibold text-lg mt-1 text-green-600">Dépôt</div>
+            
+            <!-- Destinataire -->
+            <div class="text-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div class="text-sm text-gray-600 mb-1">Destinataire</div>
+                <div id="resume-destinataire" class="font-semibold text-gray-800">--</div>
+            </div>
+            
+            <!-- Type -->
+            <div class="text-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div class="text-sm text-gray-600 mb-1">Type</div>
+                <div id="resume-type" class="font-semibold text-gray-800">--</div>
             </div>
         </div>
     </div>
+    <!-- ==================== FIN RÉSUMÉ ==================== -->
+    
+</div> <!-- Fermeture du div principal bg-white -->
 
-
-
-
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="text-center p-4 bg-white rounded-lg border">
-            <div class="text-sm text-gray-600">Départ</div>
-            <div id="resume-depart" class="font-semibold text-lg mt-1 text-gray-800">--</div>
-        </div>
-        <div class="text-center p-4 bg-white rounded-lg border">
-            <div class="text-sm text-gray-600">Client</div>
-            <div id="resume-client" class="font-semibold text-lg mt-1 text-gray-800">--</div>
-        </div>
-        <div class="text-center p-4 bg-white rounded-lg border">
-            <div class="text-sm text-gray-600">Destinataire</div>
-            <div id="resume-destinataire" class="font-semibold text-lg mt-1 text-gray-800">--</div>
-        </div>
-        <div class="text-center p-4 bg-white rounded-lg border">
-            <div class="text-sm text-gray-600">Type</div>
-            <div id="resume-type" class="font-semibold text-lg mt-1 text-green-600">--</div>
-        </div>
-    </div>
-
-
-
-</div>

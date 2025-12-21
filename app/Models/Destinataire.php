@@ -16,6 +16,7 @@ class Destinataire extends Model
         'telephone',
         'adresse',
         'zone_id',
+        'client_id',
         'coordonnees_gps',
         'description_localisation',
         'cree_par_id',
@@ -25,6 +26,13 @@ class Destinataire extends Model
     protected $casts = [
         'coordonnees_gps' => 'array',
     ];
+
+    // Relation avec le client (NOUVELLE RELATION)
+    public function client()
+    {
+        return $this->belongsTo(Client::class, 'id_client');
+    }
+
 
     // Relation avec la zone
     public function zone()

@@ -11,6 +11,8 @@ class FormulaireTroisEtapes {
         this.articles = [];                   // Tableau des articles ajoutés
         this.donneesEtape1 = {};              // Données de l'étape 1
         this.donneesEtape2 = {};              // Données de l'étape 2
+        this.currentClientId = null;
+        this.destinatairesCache = {}; // Cache pour éviter les appels API répétés
         
         // ==================== INITIALISATION ====================
         this.init();
@@ -42,6 +44,7 @@ class FormulaireTroisEtapes {
         const btnSuivant = document.getElementById('btn-suivant');
         const btnPrecedent = document.getElementById('btn-precedent');
         const btnValider = document.getElementById('btn-valider');
+        
         
         if (btnSuivant) {
             btnSuivant.addEventListener('click', () => this.etapeSuivante());
@@ -79,13 +82,24 @@ class FormulaireTroisEtapes {
             });
         }
         
-        if (clientSelect) {
-            clientSelect.addEventListener('change', () => this.mettreAJourResumeEtape1());
-        }
-        
-        if (destinataireSelect) {
-            destinataireSelect.addEventListener('change', () => this.mettreAJourResumeEtape1());
-        }
+        // ==================== CLIENT : COMMENTÉ TEMPORAIREMENT ====================
+        // L'ancien select n'existe plus, remplacé par input hidden
+        // La gestion se fera via la nouvelle classe ClientSearch
+        // const clientSelect = document.getElementById('client_id');
+        // if (clientSelect) {
+        //     clientSelect.addEventListener('change', async (e) => {
+        //         await this.gestionChangementClient(e.target.value);
+        //         this.mettreAJourResumeEtape1();
+        //     });
+        // }
+
+        // ==================== DESTINATAIRE : À ADAPTER PLUS TARD ====================
+        // Le select destinataire sera créé dynamiquement
+        // On gérera l'événement plus tard
+        // const destinataireSelect = document.getElementById('destinataire_id');
+        // if (destinataireSelect) {
+        //     destinataireSelect.addEventListener('change', () => this.mettreAJourResumeEtape1());
+        // }
         
         // ==================== ÉVÉNEMENTS TYPE PRISE EN CHARGE ====================
         document.querySelectorAll('input[name="type_prise_charge"]').forEach(radio => {
@@ -199,7 +213,10 @@ class FormulaireTroisEtapes {
         // ==================== VÉRIFICATION DES CHAMPS OBLIGATOIRES ====================
         const depart = document.getElementById('depart_id').value;
         const client = document.getElementById('client_id').value;
-        const destinataire = document.getElementById('destinataire_id').value;
+        const destinataireSelect = document.getElementById('destinataire_id');
+            const destinataire = destinataireSelect && !destinataireSelect.classList.contains('hidden') 
+        ? destinataireSelect.value 
+        : '';
         
         if (!depart || !client || !destinataire) {
             let message = 'Veuillez sélectionner :\n';
@@ -429,14 +446,16 @@ class FormulaireTroisEtapes {
         }
         
         // ==================== CLIENT ====================
-        const clientSelect = document.getElementById('client_id');
-        const clientOption = clientSelect.options[clientSelect.selectedIndex];
+        const clientId = document.getElementById('client_id').value;
         const resumeClient = document.getElementById('resume-client');
-        
+        const selectedClientName = document.getElementById('selected_client_name');
+
         if (resumeClient) {
-            resumeClient.textContent = clientOption.value 
-                ? clientOption.textContent.split('(')[0].trim() 
-                : '--';
+            if (clientId && selectedClientName && selectedClientName.textContent !== '--') {
+                resumeClient.textContent = selectedClientName.textContent;
+            } else {
+                resumeClient.textContent = '--';
+            }
         }
         
         // ==================== DESTINATAIRE ====================
@@ -551,7 +570,376 @@ class FormulaireTroisEtapes {
         console.log('🔄 Mise à jour liste articles');
         // À IMPLÉMENTER : afficher la liste des articles ajoutés
     }
+
+    /**
+     * GÉRER LE CHANGEMENT DE CLIENT (CHARGEMENT DES DESTINATAIRES)
+     * @param {string} clientId - ID du client sélectionné
+     */
+    async gestionChangementClient(clientId) {
+        console.log(`👤 Client sélectionné : ${clientId}`);
+        this.currentClientId = clientId;
+        
+        // Références aux éléments HTML
+        const container = document.getElementById('destinataire-container');
+        const initialMsg = document.getElementById('destinataire-initial');
+        const select = document.getElementById('destinataire_id');
+        const loading = document.getElementById('destinataire-loading');
+        const noDest = document.getElementById('no-destinataires');
+        
+        // 1. Réinitialiser l'affichage
+        this.resetAffichageDestinataires();
+        
+        if (!clientId) {
+            // Aucun client sélectionné
+            if (container) container.classList.add('hidden');
+            if (initialMsg) initialMsg.classList.remove('hidden');
+            this.updateResumeDestinataire('--');
+            return;
+        }
+        
+        // 2. Client sélectionné : afficher le container
+        if (container) container.classList.remove('hidden');
+        if (initialMsg) initialMsg.classList.add('hidden');
+        
+        // 3. Vérifier le cache
+        if (this.destinatairesCache[clientId]) {
+            console.log('📦 Destinataires récupérés du cache');
+            this.afficherDestinataires(this.destinatairesCache[clientId]);
+            return;
+        }
+        
+        // 4. Charger depuis l'API
+        await this.chargerDestinatairesAPI(clientId);
+    }
+
+    /**
+    * RÉINITIALISER L'AFFICHAGE DES DESTINATAIRES
+    */
+    resetAffichageDestinataires() {
+        const select = document.getElementById('destinataire_id');
+        const loading = document.getElementById('destinataire-loading');
+        const noDest = document.getElementById('no-destinataires');
+        
+        if (select) {
+            select.innerHTML = '<option value="">-- Choisir un destinataire --</option>';
+            select.classList.add('hidden');
+            select.value = '';
+        }
+        
+        if (loading) loading.classList.add('hidden');
+        if (noDest) noDest.classList.add('hidden');
+    }
+
+
+    /**
+     * CHARGER LES DESTINATAIRES DEPUIS L'API
+     * @param {string} clientId - ID du client
+     */
+    async chargerDestinatairesAPI(clientId) {
+        console.log(`🔄 Chargement des destinataires pour client ${clientId}`);
+        
+        const select = document.getElementById('destinataire_id');
+        const loading = document.getElementById('destinataire-loading');
+        const noDest = document.getElementById('no-destinataires');
+        
+        // Afficher le loading
+        if (loading) loading.classList.remove('hidden');
+        if (select) select.classList.add('hidden');
+        if (noDest) noDest.classList.add('hidden');
+        
+        try {
+            const response = await fetch(`/collecteur/clients/${clientId}/destinataires`);
+            
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP ${response.status}`);
+            }
+            
+            const destinataires = await response.json();
+            
+            // Mettre en cache
+            this.destinatairesCache[clientId] = destinataires;
+            
+            // Afficher les résultats
+            if (loading) loading.classList.add('hidden');
+            this.afficherDestinataires(destinataires);
+            
+            console.log(`✅ ${destinataires.length} destinataire(s) chargé(s)`);
+            
+        } catch (error) {
+            console.error('❌ Erreur chargement destinataires:', error);
+            
+            if (loading) loading.classList.add('hidden');
+            this.afficherErreurDestinataires();
+        }
+    }
+
+    /**
+     * AFFICHER LES DESTINATAIRES DANS LE SELECT
+     * @param {Array} destinataires - Liste des destinataires
+     */
+    afficherDestinataires(destinataires) {
+        const select = document.getElementById('destinataire_id');
+        const noDest = document.getElementById('no-destinataires');
+        
+        if (!select) return;
+        
+        if (destinataires.length === 0) {
+            // Aucun destinataire
+            select.classList.add('hidden');
+            if (noDest) {
+                noDest.classList.remove('hidden');
+            }
+            this.updateResumeDestinataire('Aucun destinataire');
+            return;
+        }
+        
+        // Peupler le select
+        let options = '<option value="">-- Choisir un destinataire --</option>';
+        destinataires.forEach(dest => {
+            const displayName = `${dest.prenom} ${dest.nom}`.trim();
+            const displayText = `${displayName} (${dest.code_unique})`;
+            options += `<option value="${dest.id}">📍 ${displayText}</option>`;
+        });
+        
+        select.innerHTML = options;
+        select.classList.remove('hidden');
+        
+        // Sélectionner le premier par défaut
+        if (destinataires.length > 0) {
+            // select.value = destinataires[0].id; // Optionnel : auto-sélection
+            this.updateResumeDestinataire(`${destinataires[0].prenom} ${destinataires[0].nom}`);
+        }
+        
+        // Ajouter l'écouteur d'événement pour le changement
+        select.addEventListener('change', () => {
+            this.mettreAJourResumeEtape1();
+            this.validerEtape(1);
+        });
+    }
+
+    /**
+     * AFFICHER UNE ERREUR DE CHARGEMENT
+     */
+    afficherErreurDestinataires() {
+        const noDest = document.getElementById('no-destinataires');
+        if (noDest) {
+            noDest.innerHTML = `
+                <p class="text-red-800">
+                    <span class="font-semibold">❌ Erreur :</span> 
+                    Impossible de charger les destinataires.
+                </p>
+                <button type="button" onclick="window.formulaireEvenement.chargerDestinatairesAPI('${this.currentClientId}')" 
+                        class="mt-2 text-blue-600 hover:text-blue-800 text-sm flex items-center">
+                    Réessayer
+                </button>
+            `;
+            noDest.classList.remove('hidden');
+        }
+        this.updateResumeDestinataire('Erreur chargement');
+    }
+
+    /**
+     * METTRE À JOUR LE RÉSUMÉ DU DESTINATAIRE
+     * @param {string} text - Texte à afficher
+     */
+    updateResumeDestinataire(text) {
+        const resumeElement = document.getElementById('resume-destinataire');
+        if (resumeElement) {
+            resumeElement.textContent = text;
+        }
+    }
+    
+
 }
+
+
+// ====================================================
+// CLASSE POUR LA RECHERCHE DE CLIENTS (AJAX)
+// ====================================================
+
+class ClientSearch {
+    constructor() {
+        this.searchInput = document.getElementById('client_search');
+        this.clientIdInput = document.getElementById('client_id');
+        this.resultsContainer = document.getElementById('client_results');
+        this.selectedContainer = document.getElementById('client_selected');
+        this.selectedName = document.getElementById('selected_client_name');
+        this.selectedInfo = document.getElementById('selected_client_info');
+        this.clearBtn = document.getElementById('clear_client_btn');
+        this.messageContainer = document.getElementById('client_message');
+        
+        if (this.searchInput) {
+            this.init();
+        }
+    }
+    
+    init() {
+        console.log('🔍 Initialisation recherche client');
+        
+        // Recherche avec debounce
+        this.searchInput.addEventListener('input', this.debounce(this.search.bind(this), 300));
+        
+        // Bouton "Changer"
+        if (this.clearBtn) {
+            this.clearBtn.addEventListener('click', this.clearSelection.bind(this));
+        }
+        
+        // Cacher résultats quand on clique ailleurs
+        document.addEventListener('click', (e) => {
+            if (!this.searchInput.contains(e.target) && 
+                !this.resultsContainer.contains(e.target)) {
+                this.resultsContainer.classList.add('hidden');
+            }
+        });
+    }
+    
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    async search() {
+        const query = this.searchInput.value.trim();
+        
+        // Réinitialiser
+        this.hideMessage();
+        this.resultsContainer.classList.add('hidden');
+        this.resultsContainer.innerHTML = '';
+        
+        if (query.length < 2) {
+            return;
+        }
+        
+        // Afficher message "Recherche en cours"
+        this.showMessage('Recherche en cours...', 'info');
+        
+        try {
+            const response = await fetch(`/collecteur/clients/search?q=${encodeURIComponent(query)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Cache-Control': 'no-cache'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const clients = await response.json();
+            
+            this.hideMessage();
+            
+            if (clients.length === 0) {
+                this.showMessage('Aucun client trouvé', 'warning');
+                return;
+            }
+            
+            // Afficher les résultats
+            this.displayResults(clients);
+            
+        } catch (error) {
+            console.error('❌ Erreur recherche:', error);
+            this.showMessage('Erreur de recherche', 'error');
+        }
+    }
+    
+    displayResults(clients) {
+        this.resultsContainer.innerHTML = '';
+        
+        clients.forEach(client => {
+            const item = document.createElement('div');
+            item.className = 'p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer';
+            item.innerHTML = `
+                <div class="font-medium">👤 ${client.prenom} ${client.nom}</div>
+                <div class="text-sm text-gray-600">
+                    ID: ${client.unique_id} | Tel: ${client.telephone}
+                </div>
+            `;
+            
+            item.addEventListener('click', () => {
+                this.selectClient(client);
+            });
+            
+            this.resultsContainer.appendChild(item);
+        });
+        
+        this.resultsContainer.classList.remove('hidden');
+    }
+    
+    selectClient(client) {
+        console.log('✅ Client sélectionné:', client);
+        
+        // Mettre à jour les champs cachés
+        this.clientIdInput.value = client.id;
+        
+        // Mettre à jour l'affichage
+        this.selectedName.textContent = `${client.prenom} ${client.nom}`;
+        this.selectedInfo.textContent = `ID: ${client.unique_id} | Tel: ${client.telephone}`;
+        this.selectedContainer.classList.remove('hidden');
+        
+        // Cacher la recherche et les résultats
+        this.searchInput.value = '';
+        this.resultsContainer.classList.add('hidden');
+        this.hideMessage();
+        
+        // Charger les destinataires de ce client
+        if (window.formulaireEvenement) {
+            window.formulaireEvenement.gestionChangementClient(client.id);
+        }
+        
+        // Mettre à jour le résumé
+        if (window.formulaireEvenement) {
+            window.formulaireEvenement.mettreAJourResumeEtape1();
+        }
+    }
+    
+    clearSelection() {
+        this.clientIdInput.value = '';
+        this.selectedContainer.classList.add('hidden');
+        this.searchInput.focus();
+        
+        // Réinitialiser aussi les destinataires
+        const destinataireContainer = document.getElementById('destinataire-container');
+        const destinataireInitial = document.getElementById('destinataire-initial');
+        const destinataireSelect = document.getElementById('destinataire_id');
+        
+        if (destinataireContainer) destinataireContainer.classList.add('hidden');
+        if (destinataireInitial) destinataireInitial.classList.remove('hidden');
+        if (destinataireSelect) {
+            destinataireSelect.innerHTML = '<option value="">-- Choisir un destinataire --</option>';
+            destinataireSelect.classList.add('hidden');
+        }
+        
+        // Mettre à jour le résumé
+        if (window.formulaireEvenement) {
+            window.formulaireEvenement.mettreAJourResumeEtape1();
+        }
+    }
+    
+    showMessage(text, type = 'info') {
+        this.messageContainer.innerHTML = text;
+        this.messageContainer.className = `p-3 text-sm rounded-lg ${
+            type === 'error' ? 'bg-red-100 text-red-800' :
+            type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-blue-100 text-blue-800'
+        }`;
+        this.messageContainer.classList.remove('hidden');
+    }
+    
+    hideMessage() {
+        this.messageContainer.classList.add('hidden');
+    }
+}
+
+
+
 
 /**
  * INITIALISATION QUAND LE DOM EST CHARGÉ
@@ -560,11 +948,18 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 SDKTRANSIT - Formulaire prise en charge');
     
     try {
-        // Créer l'instance du formulaire
+        // 1. Créer l'instance du formulaire principal
         window.formulaireEvenement = new FormulaireTroisEtapes();
-        console.log('✅ Formulaire initialisé avec succès');
+        console.log('✅ Formulaire principal initialisé');
+        
+        // 2. Créer l'instance de recherche client
+        window.clientSearch = new ClientSearch();
+        console.log('✅ Recherche client initialisée');
+        
+        console.log('🎉 Toutes les fonctionnalités sont prêtes !');
+        
     } catch (error) {
-        console.error('❌ Erreur lors de l\'initialisation du formulaire :', error);
+        console.error('❌ Erreur lors de l\'initialisation :', error);
         alert('Une erreur est survenue lors du chargement du formulaire.');
     }
 });

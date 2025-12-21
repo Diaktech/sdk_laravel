@@ -37,24 +37,20 @@ class EvenementController extends Controller
     {
         $collecteur = Auth::user()->userable;
         
-        // Départs ouverts pour ce collecteur (de son entité)
         $departs = Depart::where('entite_id', $collecteur->entite_id)
             ->where('statut', 'ouvert')
             ->get();
-            
-        // Destinataires créés par ce collecteur
-        $destinataires = Destinataire::where('cree_par_id', $collecteur->id)
-            ->where('cree_par_type', 'App\Models\Collecteur')
-            ->get();
-            
-        // Articles disponibles
-        $articles = Article::where('est_pris_en_charge', true)->get();
-
-        // Clients du collecteur
-        $clients = Client::where('collecteur_principal_id', $collecteur->id)->get();
-        $familles = Famille::all();
-        
-        return view('collecteur.evenements.create', compact('departs', 'destinataires', 'articles', 'clients', 'familles'));
+                
+        $clients = Client::where('collecteur_principal_id', $collecteur->id)
+            ->orderBy('nom')
+            ->orderBy('prenom')
+            ->get(['id', 'unique_id', 'prenom', 'nom']); // Seulement les champs nécessaires
+                
+        return view('collecteur.evenements.create', [
+            'departs' => $departs,
+            'clients' => $clients, // Léger
+            // Pas de $clientsData !
+        ]);
     }
 
     /**
