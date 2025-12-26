@@ -20,30 +20,20 @@ class InitialDataSeeder extends Seeder
     public function run(): void
     {
         // ========== 1. RÉCUPÉRATION DES DONNÉES GÉOGRAPHIQUES ==========
-        $senegal = Pays::where('code_iso', 'SEN')->first();
-        $france = Pays::where('code_iso', 'FRA')->first();
+        // On utilise updateOrCreate pour éviter les doublons si on relance le seeder
+        $senegal = Pays::updateOrCreate(['code_iso' => 'SEN'], ['nom' => 'Sénégal']);
+        $france = Pays::updateOrCreate(['code_iso' => 'FRA'], ['nom' => 'France']);
 
-        // Fallback si pas trouvé (pour tests)
-        if (!$senegal) {
-            $senegal = Pays::create(['nom' => 'Sénégal', 'code_iso' => 'SEN']);
-        }
-        if (!$france) {
-            $france = Pays::create(['nom' => 'France', 'code_iso' => 'FRA']);
-        }
-
-        $dakar = Ville::where('nom', 'Dakar')->where('pays_id', $senegal->id)->first();
-        $paris = Ville::where('nom', 'Paris')->where('pays_id', $france->id)->first();
-
-        if (!$dakar) {
-            $dakar = Ville::create(['nom' => 'Dakar', 'pays_id' => $senegal->id]);
-        }
-        if (!$paris) {
-            $paris = Ville::create(['nom' => 'Paris', 'pays_id' => $france->id]);
-        }
+        $dakar = Ville::updateOrCreate(
+            ['nom' => 'Dakar', 'pays_id' => $senegal->id]
+        );
+        $paris = Ville::updateOrCreate(
+            ['nom' => 'Paris', 'pays_id' => $france->id]
+        );
 
         // ========== 2. CRÉATION DE LA ZONE DAKAR ==========
-        $zoneDakar = Zone::firstOrCreate(
-            ['code' => 99100],
+        $zoneDakar = Zone::updateOrCreate(
+            ['code' => '99100'],
             [
                 'nom' => 'Plateau Dakar',
                 'ville_id' => $dakar->id,
@@ -53,12 +43,10 @@ class InitialDataSeeder extends Seeder
         );
 
         // ========== 3. CRÉATION DE L'ENTITÉ TS ==========
-        $entiteTS = Entite::firstOrCreate(
+        $entiteTS = Entite::updateOrCreate(
             ['code' => 'TS'],
             [
                 'nom' => 'Terranga Services',
-                'tarif_ts_par_defaut' => 250.00,
-                'tarif_kilo_par_defaut' => 3.00,
                 'majoration_domicile' => 0.50,
                 'email_contact' => 'contact@terrangaservices.com',
                 'telephone_contact' => '+221 33 123 45 67',
@@ -66,7 +54,7 @@ class InitialDataSeeder extends Seeder
         );
 
         // ========== 4. CRÉATION DU SUPER GESTIONNAIRE ==========
-        $superGest = SuperGestionnaire::firstOrCreate(
+        $superGest = SuperGestionnaire::updateOrCreate(
             ['unique_id' => 'SM001'],
             [
                 'prenom' => 'Admin',
@@ -76,11 +64,10 @@ class InitialDataSeeder extends Seeder
             ]
         );
 
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => 'super@sdtransit.com'],
             [
                 'name' => 'Admin System',
-                'email' => 'super@sdtransit.com',
                 'password' => Hash::make('password'),
                 'user_type' => 'super_gestionnaire',
                 'userable_id' => $superGest->id,
@@ -90,8 +77,8 @@ class InitialDataSeeder extends Seeder
         );
 
         // ========== 5. CRÉATION DU GESTIONNAIRE ==========
-        $gest = Gestionnaire::firstOrCreate(
-            ['unique_id' => 'MAM001'],
+        $gest = Gestionnaire::updateOrCreate(
+            ['unique_id' => 'MAN001'],
             [
                 'prenom' => 'Manager',
                 'nom' => 'Test',
@@ -101,11 +88,10 @@ class InitialDataSeeder extends Seeder
             ]
         );
 
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => 'manager@sdtransit.com'],
             [
                 'name' => 'Manager Test',
-                'email' => 'manager@sdtransit.com',
                 'password' => Hash::make('password'),
                 'user_type' => 'gestionnaire',
                 'userable_id' => $gest->id,
@@ -114,32 +100,35 @@ class InitialDataSeeder extends Seeder
             ]
         );
 
-        // ========== 6. CRÉATION DU COLLECTEUR ==========
-        $collecteur = Collecteur::firstOrCreate(
+        // ========== 6. CRÉATION DU COLLECTEUR (LYON) ==========
+        $collecteur = Collecteur::updateOrCreate(
             ['unique_id' => 'COL001'],
             [
                 'prenom' => 'Pape',
                 'nom' => 'Diop',
                 'telephone' => '+221 77 345 67 89',
                 'adresse_ligne1' => '123 Rue de la Collecte',
-                'adresse_ligne2' => 'Appartement 4',
-                'code_postal' => '12500',
-                'ville_id' => $dakar->id,
-                'pays_id' => $senegal->id,
+                'ville_id' => $paris->id, // Il est physiquement en France
+                'pays_id' => $france->id,
                 'entite_id' => $entiteTS->id,
+                
+                // Nouveaux champs financiers migrés
+                'tarif_volume_revient' => 280.00,
+                'tarif_kilo_revient' => 3.50,
+                'tarif_kilo_vente_defaut' => 5.50,
+                'peut_modifier_tarif_vente' => true,
+                
                 'est_bloque' => false,
-                'niveau_blocage' => 0,
                 'montant_total_genere' => 0,
                 'montant_total_regularise' => 0,
                 'montant_restant' => 0,
             ]
         );
 
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => 'collecteur@sdtransit.com'],
             [
                 'name' => 'Pape Diop',
-                'email' => 'collecteur@sdtransit.com',
                 'password' => Hash::make('password'),
                 'user_type' => 'collecteur',
                 'userable_id' => $collecteur->id,
@@ -149,7 +138,7 @@ class InitialDataSeeder extends Seeder
         );
 
         // ========== 7. CRÉATION DU CLIENT ==========
-        $client = Client::firstOrCreate(
+        $client = Client::updateOrCreate(
             ['unique_id' => 'CLT001'],
             [
                 'prenom' => 'Aminata',
@@ -166,11 +155,10 @@ class InitialDataSeeder extends Seeder
             ]
         );
 
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => 'client@sdtransit.com'],
             [
                 'name' => 'Aminata Ndiaye',
-                'email' => 'client@sdtransit.com',
                 'password' => Hash::make('password'),
                 'user_type' => 'client',
                 'userable_id' => $client->id,
@@ -180,7 +168,7 @@ class InitialDataSeeder extends Seeder
         );
 
         // ========== 8. CRÉATION DU LIVREUR ==========
-        $livreur = Livreur::firstOrCreate(
+        $livreur = Livreur::updateOrCreate(
             ['unique_id' => 'DLV001'],
             [
                 'prenom' => 'Ibrahima',
@@ -191,11 +179,10 @@ class InitialDataSeeder extends Seeder
             ]
         );
 
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => 'livreur@sdtransit.com'],
             [
                 'name' => 'Ibrahima Sarr',
-                'email' => 'livreur@sdtransit.com',
                 'password' => Hash::make('password'),
                 'user_type' => 'livreur',
                 'userable_id' => $livreur->id,
@@ -208,13 +195,7 @@ class InitialDataSeeder extends Seeder
         if ($livreur && $zoneDakar) {
             $livreur->zones()->syncWithoutDetaching([$zoneDakar->id]);
         }
-
-        // ========== 10. MESSAGE DE CONFIRMATION ==========
-        $this->command->info('✅ Données initiales créées avec succès !');
-        $this->command->info('Super Admin: super@sdtransit.com / password');
-        $this->command->info('Manager: manager@sdtransit.com / password');
-        $this->command->info('Collecteur: collecteur@sdtransit.com / password');
-        $this->command->info('Client: client@sdtransit.com / password');
-        $this->command->info('Livreur: livreur@sdtransit.com / password');
+        
+        $this->command->info('✅ InitialDataSeeder mis à jour et exécuté !');
     }
 }

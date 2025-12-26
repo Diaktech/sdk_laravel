@@ -12,16 +12,12 @@ class Entite extends Model
     protected $fillable = [
         'nom',
         'code',
-        'tarif_ts_par_defaut',
-        'tarif_kilo_par_defaut',
         'majoration_domicile',
         'email_contact',
         'telephone_contact',
     ];
 
     protected $casts = [
-        'tarif_ts_par_defaut' => 'decimal:2',
-        'tarif_kilo_par_defaut' => 'decimal:2',
         'majoration_domicile' => 'decimal:2',
     ];
 

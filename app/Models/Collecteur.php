@@ -22,6 +22,11 @@ class Collecteur extends Model
         'entite_id',
         'est_bloque',
         'niveau_blocage',
+        'tarif_volume_revient',
+        'tarif_kilo_revient',
+        'tarif_kilo_vente_defaut',
+        'majoration_domicile',
+        'peut_modifier_tarif_vente',
         'montant_total_genere',
         'montant_total_regularise',
         'montant_restant',
@@ -30,6 +35,11 @@ class Collecteur extends Model
     protected $casts = [
         'est_bloque' => 'boolean',
         'niveau_blocage' => 'integer',
+        'tarif_volume_revient'      => 'decimal:2',
+        'tarif_kilo_revient'        => 'decimal:2',
+        'tarif_kilo_vente_defaut'   => 'decimal:2',
+        'majoration_domicile' => 'float',
+        'peut_modifier_tarif_vente' => 'boolean',
         'montant_total_genere' => 'decimal:2',
         'montant_total_regularise' => 'decimal:2',
         'montant_restant' => 'decimal:2',
@@ -54,4 +64,21 @@ class Collecteur extends Model
     {
         return $this->belongsTo(Pays::class);
     }
+
+    public function groupes() {
+        return $this->belongsToMany(Groupe::class, 'groupe_collecteur')
+            ->withPivot('est_propriétaire');
+    }
+
+    public function clientsPartages() {
+    return $this->hasManyThrough(
+        Client::class,
+        GroupeClient::class,
+        'partage_par',  // collecteur qui a partagé
+        'id',
+        'id',
+        'client_id'
+        )->whereNotNull('approuve_par'); // Uniquement les partages approuvés
+    }
+
 }

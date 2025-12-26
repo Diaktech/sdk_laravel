@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('nom');
             $table->string('telephone');
             
-            // ADRESSE OPTION A
+            
             $table->string('adresse_ligne1');
             $table->string('adresse_ligne2')->nullable();
             $table->string('code_postal', 10)->nullable();
@@ -28,6 +28,21 @@ return new class extends Migration
             $table->unsignedBigInteger('entite_id')->nullable();
             $table->boolean('est_bloque')->default(false);
             $table->integer('niveau_blocage')->default(0); // 0:aucun, 1:pas nouvelles prises, 2:régularisation seulement, 3:blocage total
+
+            // 1. CE QUE LE COLLECTEUR DOIT RENDRE (Le coût pour lui)
+            $table->decimal('tarif_volume_revient', 10, 2)->default(250.00); 
+            $table->decimal('tarif_kilo_revient', 10, 2)->default(3.00);
+
+            // 2. CE QUE LE CLIENT PAIE (La part fixée par le gestionnaire)
+            $table->decimal('tarif_kilo_vente_defaut', 10, 2)->default(5.00); 
+
+            //Majoration en fonction de la zone de récupération des colis, paramétré par le gestionnaire 
+            $blueprint->decimal('majoration_domicile', 10, 2)->default(0.00);
+            
+            // 3. DROITS DU COLLECTEUR
+            // 1 = Il saisit ce qu'il veut | 0 = On impose le 'tarif_kilo_vente_defaut'
+            $table->boolean('peut_modifier_tarif_vente')->default(false);
+
             $table->decimal('montant_total_genere', 10, 2)->default(0);
             $table->decimal('montant_total_regularise', 10, 2)->default(0);
             $table->decimal('montant_restant', 10, 2)->default(0);

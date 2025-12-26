@@ -33,23 +33,42 @@ class EvenementController extends Controller
     /**
      * Afficher le formulaire de création d'un événement
      */
-    public function create()
+    public function create(Request $request)
     {
         $collecteur = Auth::user()->userable;
+        //$entite = Auth::user()->entite; // On récupère l'entité du collecteur
+
+        $entite = $collecteur->entite;
         
-        $departs = Depart::where('entite_id', $collecteur->entite_id)
-            ->where('statut', 'ouvert')
-            ->get();
+        // $departs = Depart::where('entite_id', $collecteur->entite_id)    //Modifié car le collecteur peut prendre en charge sur des départ entité 0 (Ouvert à toutes les entités)
+        //     ->where('statut', 'ouvert')
+        //     ->get();
+
+        $departs = Depart::whereIn('entite_id', [$collecteur->entite_id, 0])
+        ->where('statut', 'ouvert')
+        ->orderBy('date_depart', 'asc')
+        ->get();
                 
         $clients = Client::where('collecteur_principal_id', $collecteur->id)
             ->orderBy('nom')
             ->orderBy('prenom')
             ->get(['id', 'unique_id', 'prenom', 'nom']); // Seulement les champs nécessaires
+
+        //Récupération des Familles avec leur articles
+        $familles = Famille::with(['articles' => function($query) {
+            $query->orderBy('libelle');
+        }])->orderBy('nom')->get();
+
+        $departId = session('depart_id') ?? $request->query('depart_id');
+        $depart = Depart::find($departId);
                 
         return view('collecteur.evenements.create', [
             'departs' => $departs,
-            'clients' => $clients, // Léger
-            // Pas de $clientsData !
+            'clients' => $clients, 
+            'familles' => $familles,
+            'depart'   => $depart, // Pour le type de facturation
+            'entite'   => $entite, // <--- pour window.tarifVolumeParDefaut
+            'collecteur' => $collecteur,
         ]);
     }
 
@@ -59,8 +78,8 @@ class EvenementController extends Controller
     public function store(Request $request)
     {
         $collecteur = Auth::user()->userable;
-        
-        // Validation
+
+        // 1. Validation stricte
         $validated = $request->validate([
             'depart_id' => 'required|exists:departs,id',
             'client_id' => 'required|exists:clients,id',
@@ -72,12 +91,22 @@ class EvenementController extends Controller
             'items.*.longueur' => 'nullable|numeric|min:0',
             'items.*.largeur' => 'nullable|numeric|min:0',
             'items.*.hauteur' => 'nullable|numeric|min:0',
-            'items.*.poids' => 'nullable|numeric|min:0',
-            'items.*.etat' => 'required|in:bon_etat,defaut',
-            'items.*.notes_defaut' => 'nullable|string',
+            'items.*.poids' => 'nullable|numeric|min:0', // Pour le calcul au kilo
+            'items.*.etat' => 'required|in:neuf,occasion,abime',
         ]);
-        
-        // Créer l'événement
+
+        // 2. Récupérer le départ pour connaître les tarifs (prix_m3 ou prix_kilo)
+        $depart = Depart::findOrFail($validated['depart_id']);
+
+        // --- SÉCURITÉ SUPPLÉMENTAIRE ---
+        // On vérifie que le départ appartient soit à l'entité du collecteur, soit est un départ ouvert (0)
+        if ($depart->entite_id !== $collecteur->entite_id && $depart->entite_id !== 0) {
+            return redirect()->back()
+                ->withErrors(['depart_id' => 'Ce départ n’est pas autorisé pour votre entité.'])
+                ->withInput();
+        }
+
+        // 3. Créer l'événement de base
         $evenement = Evenement::create([
             'depart_id' => $validated['depart_id'],
             'client_id' => $validated['client_id'],
@@ -86,31 +115,62 @@ class EvenementController extends Controller
             'code_unique' => 'EXP' . date('Y') . str_pad(Evenement::count() + 1, 5, '0', STR_PAD_LEFT),
             'type_prise_charge' => $validated['type_prise_charge'],
             'statut' => 'en_attente',
-            'priorite' => 'normale',
         ]);
-        
-        // Ajouter les items
+
+        // 4. Boucle sur les articles pour sécuriser les calculs
         foreach ($validated['items'] as $itemData) {
-            $item = new ItemEvenement($itemData);
+            $articleDB = \App\Models\Article::find($itemData['article_id']);
             
-            // Calculer le volume si dimensions fournies
-            if ($itemData['longueur'] && $itemData['largeur'] && $itemData['hauteur']) {
-                $item->volume_calcule = ($itemData['longueur'] * $itemData['largeur'] * $itemData['hauteur']) / 1000000; // cm³ → m³
+            // --- SÉCURITÉ : Mesures Fixes ---
+            // Si l'article est à mesures fixes, on ignore ce qui vient du formulaire
+            if ($articleDB->mesures_fixes) {
+                $longueur = $articleDB->longueur;
+                $largeur = $articleDB->largeur;
+                $hauteur = $articleDB->hauteur;
+                $volumeUnit = $articleDB->volume;
+            } else {
+                $longueur = $itemData['longueur'];
+                $largeur = $itemData['largeur'];
+                $hauteur = $itemData['hauteur'];
+                $volumeUnit = ($longueur * $largeur * $hauteur) / 1000000;
             }
+
+            // --- CALCUL DES PRIX ---
+            $prixUnitaire = 0;
             
-            $evenement->items()->save($item);
+            // Si le départ est au volume
+            if ($depart->type_facturation == 'volume') {
+                $prixUnitaire = $volumeUnit * $depart->prix_m3;
+            } 
+            // Si le départ est au poids
+            elseif ($depart->type_facturation == 'poids') {
+                $poidsSaisi = $itemData['poids'] ?? $articleDB->poids_moyen ?? 0;
+                $prixUnitaire = $poidsSaisi * $depart->prix_kilo;
+            }
+
+            // --- ENREGISTREMENT DE L'ITEM ---
+            $evenement->items()->create([
+                'article_id' => $articleDB->id,
+                'quantite' => $itemData['quantite'],
+                'longueur' => $longueur,
+                'largeur' => $largeur,
+                'hauteur' => $hauteur,
+                'poids' => $itemData['poids'] ?? 0,
+                'volume_unitaire' => $volumeUnit,
+                'prix_unitaire' => $prixUnitaire,
+                'prix_total' => $prixUnitaire * $itemData['quantite'],
+                'etat' => $itemData['etat'],
+            ]);
         }
+
+        // 5. Finalisation
+        $evenement->calculerTotaux(); // Méthode dans ton modèle Evenement
         
-        // Recalculer les totaux de l'événement
-        $evenement->calculerTotaux();
-        
-        // Mettre à jour le volume actuel du départ
-        $depart = Depart::find($validated['depart_id']);
-        $depart->volume_actuel += $evenement->volume_total;
-        $depart->save();
-        
+        // Mise à jour du remplissage du départ
+        $depart->increment('volume_actuel', $evenement->volume_total);
+
         return redirect()->route('collecteur.evenements.show', $evenement)
-            ->with('success', 'Prise en charge créée avec succès !');
+            ->with('success', 'Prise en charge enregistrée et prix calculés !');
     }
 
     /**

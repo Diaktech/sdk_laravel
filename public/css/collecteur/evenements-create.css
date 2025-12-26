@@ -123,3 +123,287 @@
 .transition-all {
     transition: all 0.3s ease;
 }
+
+/* ==================== BOUTON SELECTION DES CLIENTS ==================== */
+
+/* Animation pour le changement de bouton */
+.filter-btn {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Style pour bouton actif - Violet */
+.filter-btn.active {
+    background-color: #f3e8ff; /* purple-100 */
+    border-color: #8b5cf6;    /* purple-500 */
+    color: #7c3aed;           /* purple-700 */
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+}
+
+/* Style pour bouton actif - Bleu (groupe) */
+.filter-btn.active-groupe {
+    background-color: #dbeafe; /* blue-100 */
+    border-color: #3b82f6;     /* blue-500 */
+    color: #1d4ed8;            /* blue-700 */
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+/* Style pour bouton actif - Vert (partagés) */
+.filter-btn.active-partages {
+    background-color: #dcfce7; /* green-100 */
+    border-color: #10b981;     /* green-500 */
+    color: #047857;            /* green-700 */
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+/* Grille de familles */
+.grille-familles-premium {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 colonnes sur mobile */
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .grille-familles-premium {
+        grid-template-columns: repeat(4, 1fr); /* 4 colonnes sur PC */
+    }
+}
+
+/**
+================BOUTON SUIVANT===================
+*/
+.btn-suivant {
+    background-color: #2563eb !important; /* Bleu vif */
+    color: white !important;
+}
+.btn-suivant:hover {
+    background-color: #1d4ed8 !important;
+}
+/* Style pour Tom Select pour qu'il s'intègre bien à Tailwind */
+.ts-control { border-radius: 0.375rem !important; border-color: #d1d5db !important; padding: 0.5rem !important; }
+/**
+================FIN BOUTON SUIVANT===================
+*/
+
+/* ================Le bouton type "Tuile" ================*/
+.btn-famille-tuile {
+    background: #000000;
+    color: #ffffff;
+    height: 140px; /* Boutons bien hauts */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    border: 3px solid transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    padding: 1rem;
+}
+
+.btn-famille-tuile:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    background: #1a1a1a;
+}
+
+.btn-famille-tuile.active {
+    border-color: #3b82f6; /* Bleu quand sélectionné */
+    background: #000000;
+}
+
+.btn-famille-tuile .nom-famille {
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+.btn-famille-tuile .compteur-articles {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.5rem;
+}
+
+/* ================AJOUTER UN ARTICLE" ================*/
+
+
+#btn-ajouter-article {
+    background-color: #2563eb !important; /* Bleu intense */
+    color: #ffffff !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    z-index: 10;
+    position: relative;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+#btn-ajouter-article:hover {
+    background-color: #1d4ed8 !important;
+    transform: translateY(-1px);
+}
+
+#btn-ajouter-article:active {
+    transform: translateY(0);
+}
+
+label.block.text-\[9px\] {
+    letter-spacing: 0.05em;
+    line-height: 1;
+}
+
+/*********************FORMULAIRE***********************/
+/* 1. Sécurité pour empêcher toute la page de bouger */
+body, html {
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+/* 2. Personnalisation du scroll horizontal (Barre discrète) */
+.custom-scrollbar::-webkit-scrollbar {
+    height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+/* 3. LE COEUR DU SCROLL : On cible la div que tu as dans ton HTML */
+.overflow-x-auto {
+    width: 100%;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    display: block;
+}
+
+/* On force le tableau à être large pour déclencher le scroll horizontal */
+.overflow-x-auto table {
+    min-width: 950px !important; /* On augmente un peu pour être sûr que tout tienne */
+    table-layout: auto; /* On laisse le tableau s'adapter au contenu des inputs */
+}
+
+/* 4. Fixer la colonne "Article" pour qu'elle reste visible au scroll (Optionnel mais recommandé) */
+/* Pour l'utiliser, ajoute la classe 'sticky-column' au premier <th> et premier <td> */
+.sticky-column {
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 10;
+    box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
+}
+
+/* 5. Adaptation Mobile pour les boutons Famille */
+@media (max-width: 640px) {
+    .btn-famille-tuile {
+        height: 100px !important;
+        padding: 0.5rem !important;
+    }
+    .btn-famille-tuile .nom-famille {
+        font-size: 0.8rem !important;
+        line-height: 1.2;
+    }
+    /* On réduit un peu les marges pour gagner de la place */
+    .px-3 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+}
+
+/* Nettoyage des labels dans les lignes du tableau */
+#liste-articles-body td label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 10px !important;
+    color: #94a3b8; /* Slate-400 */
+    text-align: center;
+    font-weight: 800;
+}
+
+/* Éviter que le texte "m³ m³" n'apparaisse (vu sur ta capture) */
+#total-volume-display + span {
+    margin-left: 2px;
+}
+
+/* On cache les en-têtes du tableau s'ils gênent, car chaque input a son propre label maintenant */
+thead th {
+    display: none; /* Optionnel : si tu trouves que ça fait trop de texte */
+}
+
+/* Forcer le conteneur à être blanc pour que le bandeau noir ressorte */
+#etape-2 {
+    background-color: #f8fafc;
+    padding-bottom: 50px;
+}
+
+/* Forcer le bandeau de résumé en noir profond (Image 3) */
+.summary-box {
+    background-color: #0f172a !important; /* Slate 900 */
+    color: white !important;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+/* Supprimer les en-têtes du tableau qui font doublon avec les labels internes */
+#table-articles thead {
+    display: none;
+}
+
+/* Ajuster la colonne fixe pour qu'elle ne cache pas les ombres */
+.sticky-column {
+    z-index: 20;
+    box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Force l'alignement vertical propre pour chaque cellule */
+#liste-articles-body td > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Aligne les inputs sur la même ligne horizontale */
+    height: 100%;
+}
+
+/* On s'assure que les labels ne flottent pas
+#liste-articles-body label, 
+#liste-articles-body span.block {
+    position: static !important;
+    pointer-events: none;
+} */
+
+#liste-articles-body td {
+    vertical-align: bottom; /* Aide à l'alignement des bas de colonnes */
+}
+
+#liste-articles-body .flex-col {
+    min-height: 55px; /* Donne une hauteur fixe à la zone de saisie pour stabiliser l'alignement */
+}
+
+/* Aligne tous les conteneurs de saisie vers le haut de la cellule */
+#liste-articles-body td > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    vertical-align: top !important;
+}
+
+/* Supprime les marges par défaut qui pourraient pousser les inputs L, l, H */
+.input-dim {
+    margin: 0 !important;
+}
+
+/* Assure une hauteur cohérente pour la zone de label */
+#liste-articles-body label {
+    min-height: 12px;
+    display: flex;
+    align-items: center;
+}

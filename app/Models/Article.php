@@ -22,6 +22,7 @@ class Article extends Model
         'longueur',
         'largeur',
         'hauteur',
+        'volume_article',
         'poids',
         'mesures_fixes',
         'est_pris_en_charge',
@@ -36,8 +37,24 @@ class Article extends Model
         'longueur' => 'decimal:2',
         'largeur' => 'decimal:2',
         'hauteur' => 'decimal:2',
+        'volume_article' => 'decimal:4',
         'poids' => 'decimal:3',
     ];
+
+    /**
+     * Logique automatique à l'enregistrement
+     */
+    protected static function booted()
+    {
+        static::saving(function ($article) {
+            // Si l'article a des mesures, on calcule le volume avant de sauvegarder
+            if ($article->longueur && $article->largeur && $article->hauteur) {
+                $article->volume_article = ($article->longueur * $article->largeur * $article->hauteur) / 1000000;
+            } else {
+                $article->volume_article = 0;
+            }
+        });
+    }
 
     // Relation : un article appartient à une famille
     public function famille()
@@ -54,10 +71,7 @@ class Article extends Model
     // Méthode pour calculer le volume (si mesures disponibles)
     public function getVolumeAttribute()
     {
-        if ($this->longueur && $this->largeur && $this->hauteur) {
-            return ($this->longueur * $this->largeur * $this->hauteur) / 1000000; // en m³
-        }
-        return null;
+        return $this->volume_article ?? 0;
     }
 
     // Vérifie si l'article a des mesures

@@ -37,41 +37,55 @@ class ClientController extends Controller
         
         // 2. Nettoyer et récupérer le terme de recherche
         $query = trim($request->get('q', ''));
+
+        // 3. NOUVEAU : Récupérer le type de filtre (directs, groupe, partages)
+        $type = $request->get('type', 'directs'); // Valeur par défaut : clients directs
         
-        // 3. Validation: minimum 2 caractères (sauf pour ID numérique)
+        // 4. Validation: minimum 2 caractères (sauf pour ID numérique)
         if (strlen($query) < 2 && !is_numeric($query)) {
             return response()->json([]); // Retour vide
         }
+
+        // 5. CHOISIR LA REQUÊTE SELON LE TYPE
+        switch($type) {
+            case 'groupe':
+                $clientsQuery = $this->getClientsGroupeQuery($collecteur);
+                break;
+            case 'partages':
+                $clientsQuery = $this->getClientsPartagesQuery($collecteur);
+                break;
+            default: // 'directs' (ton code actuel)
+                $clientsQuery = Client::where('collecteur_principal_id', $collecteur->id);
+        }
         
-        // 4. Recherche dans la base de données
-        $clients = Client::where('collecteur_principal_id', $collecteur->id)
-            ->where(function($q) use ($query) {
-                // 🔍 CRITÈRE 1: ID unique exact
-                $q->where('unique_id', $query);
-                
-                // 🔍 CRITÈRE 2: Téléphone (recherche partielle)
-                $q->orWhere('telephone', 'LIKE', "%{$query}%");
-                
-                // 🔍 CRITÈRE 3: Email (recherche partielle)
-                //$q->orWhere('email', 'LIKE', "%{$query}%"); Pas de mail dans la table client
-                
-                // 🔍 CRITÈRE 3: Nom et/ou prénom
-                if (strpos($query, ' ') !== false) {
-                    // Si espace dans la recherche: "nom prénom" ou "prénom nom"
-                    $q->orWhereRaw("CONCAT(nom, ' ', prenom) LIKE ?", ["%{$query}%"]);
-                    $q->orWhereRaw("CONCAT(prenom, ' ', nom) LIKE ?", ["%{$query}%"]);
-                } else {
-                    // Sinon: chercher dans nom OU prénom
-                    $q->orWhere('nom', 'LIKE', "%{$query}%");
-                    $q->orWhere('prenom', 'LIKE', "%{$query}%");
-                }
-            })
+        // 6. Recherche dans la base de données
+        $clients = $clientsQuery->where(function($q) use ($query) {
+            // 🔍 CRITÈRE 1: ID unique exact
+            $q->where('unique_id', $query);
+            
+            // 🔍 CRITÈRE 2: Téléphone (recherche partielle)
+            $q->orWhere('telephone', 'LIKE', "%{$query}%");
+            
+            // 🔍 CRITÈRE 3: Email (recherche partielle)
+            //$q->orWhere('email', 'LIKE', "%{$query}%"); Pas de mail dans la table client
+            
+            // 🔍 CRITÈRE 3: Nom et/ou prénom
+            if (strpos($query, ' ') !== false) {
+                // Si espace dans la recherche: "nom prénom" ou "prénom nom"
+                $q->orWhereRaw("CONCAT(nom, ' ', prenom) LIKE ?", ["%{$query}%"]);
+                $q->orWhereRaw("CONCAT(prenom, ' ', nom) LIKE ?", ["%{$query}%"]);
+            } else {
+                // Sinon: chercher dans nom OU prénom
+                $q->orWhere('nom', 'LIKE', "%{$query}%");
+                $q->orWhere('prenom', 'LIKE', "%{$query}%");
+            }
+        })
             // 📊 TRI INTELLIGENT: priorité aux correspondances exactes
             ->orderByRaw("
                 CASE 
                     WHEN unique_id = ? THEN 1        -- ID exact = priorité 1
                     WHEN telephone LIKE ? THEN 2     -- Téléphone = priorité 2
-                    ELSE 4                           -- Nom/prénom = priorité 3
+                    ELSE 3                           -- Nom/prénom = priorité 3
                 END
             ", [$query, "%{$query}%"])
             // 📊 TRI ALPHABÉTIQUE pour les égalités de priorité
@@ -80,9 +94,10 @@ class ClientController extends Controller
             ->limit(5) // 🔒 Limiter à 5 résultats max (performance + UX)
             ->get(['id', 'unique_id', 'prenom', 'nom', 'telephone']); // 🎯 Seulement les champs nécessaires
         
-        // 5. Retourner les résultats en JSON
+        // 7. Retourner les résultats en JSON
         return response()->json($clients);
     }
+    
     
     /**
      * ============================================
@@ -115,4 +130,30 @@ class ClientController extends Controller
         // 4. Retourner les destinataires en JSON
         return response()->json($destinataires);
     }
+
+    /**
+     * Requête pour les clients du groupe
+     */
+    private function getClientsGroupeQuery($collecteur)
+    {
+        // Clients qui sont dans les mêmes groupes que le collecteur
+        return Client::whereHas('groupes', function($q) use ($collecteur) {
+            $q->whereHas('collecteurs', function($q2) use ($collecteur) {
+                $q2->where('collecteur_id', $collecteur->id);
+            });
+        });
+    }
+
+    /**
+     * Requête pour les clients partagés
+     */
+    private function getClientsPartagesQuery($collecteur)
+    {
+        // Clients partagés AVEC ce collecteur (validés par manager)
+        // Partagés par d'autres collecteurs, pas par lui-même
+        return Client::whereHas('groupes', function($q) use ($collecteur) {
+            $q->where('partage_par', '!=', $collecteur->id) // Pas partagé PAR lui
+            ->whereNotNull('approuve_par'); // Validé par manager
+        });
+    }    
 }

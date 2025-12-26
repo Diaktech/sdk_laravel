@@ -22,13 +22,16 @@ return new class extends Migration
             $table->enum('type_prise_charge', ['depot', 'domicile'])->default('depot');
             $table->enum('statut', ['en_attente', 'valide', 'attente_correction', 'annule', 'termine'])->default('en_attente');
             $table->enum('priorite', ['basse', 'normale', 'haute', 'urgente'])->default('normale');
+
+            // La zone de livraison (copiée depuis le destinataire au moment de la création)
+            $table->foreignId('zone_id')->constrained('zones');
             
             // Calculs et totaux
             $table->decimal('volume_total', 10, 3)->default(0); // m³
             $table->decimal('poids_total', 10, 2)->default(0); // kg
             $table->decimal('montant_total', 12, 2)->default(0);
-            $table->decimal('montant_ts', 12, 2)->default(0);
-            $table->decimal('montant_collecteur', 12, 2)->default(0);
+            $table->decimal('part_entite', 12, 2)->default(0);
+            $table->decimal('commission_col', 12, 2)->default(0);
             $table->decimal('prix_kilo', 8, 2)->nullable(); // 3.00 ou 3.50
             $table->decimal('prix_m3', 10, 2)->nullable(); // montant_total / volume_total
             
@@ -37,6 +40,9 @@ return new class extends Migration
             $table->boolean('necessite_validation')->default(false);
             $table->foreignId('valide_par_id')->nullable()->constrained('gestionnaires')->onDelete('set null');
             $table->timestamp('date_validation')->nullable();
+
+            // Ajout de la note générale de la prise en charge
+            $table->text('note')->nullable();
             
             // Timestamps
             $table->timestamps();

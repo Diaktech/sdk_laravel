@@ -10,6 +10,8 @@ return new class extends Migration
     {
         Schema::create('destinataires', function (Blueprint $table) {
             $table->id();
+
+            $table->foreignId('client_id')->constrained('clients')->onDelete('cascade');
             
             // Identifiant unique
             $table->string('code_unique')->unique(); // DES0001

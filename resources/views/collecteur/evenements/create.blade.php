@@ -5,7 +5,7 @@
                 Nouvelle Prise en Charge
             </h2>
             <a href="{{ route('collecteur.evenements.index') }}" 
-               class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
                 ← Retour à la liste
             </a>
         </div>
@@ -99,10 +99,29 @@
 
     <!-- Inclusion des fichiers CSS et JS externes -->
     @push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/collecteur/evenements-create.css') }}">
+    <style>
+
+        </style>
     @endpush
 
+    
     @push('scripts')
-    <script src="{{ asset('js/collecteur/evenements-create.js') }}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+        
+        <script src="{{ asset('js/collecteur/evenements-create.js') }}"></script>
+
+        <script>
+            // On ne fait QUE passer les données, pas de logique ici
+            window.DATA_CATALOGUE = @json($familles);
+        </script>
+        <script>
+            // On récupère le tarif de base de l'entité (via le contrôleur ou Auth)
+            window.tarifVolumeParDefaut = {{ $entite->tarif_volume_par_defaut ?? 250 }};
+            window.tarifPoidsParDefaut = {{ $entite->tarif_kilo_par_defaut ?? 5 }}; // Exemple: 2€/kg
+            window.typeFacturation = "{{ $depart->type_facturation ?? 'volume' }}";
+            window.collecteurCanEditPrix = {{ $collecteur->peut_modifier_tarif_vente ? 'true' : 'false' }};
+        </script>
     @endpush
 </x-app-layout>

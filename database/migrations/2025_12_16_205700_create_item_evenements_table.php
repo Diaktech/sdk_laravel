@@ -17,15 +17,27 @@ return new class extends Migration
             
             // Quantité et mesures
             $table->integer('quantite')->default(1);
-            $table->decimal('longueur', 8, 2)->nullable(); // cm
-            $table->decimal('largeur', 8, 2)->nullable(); // cm
-            $table->decimal('hauteur', 8, 2)->nullable(); // cm
-            $table->decimal('poids', 10, 2)->nullable(); // kg
-            
-            // Calculs
-            $table->decimal('volume_calcule', 10, 3)->default(0); // m³
-            $table->decimal('prix_par_m3', 10, 2)->nullable();
-            $table->decimal('prix_par_kilo', 10, 2)->nullable();
+            $table->decimal('longueur', 8, 2)->nullable();
+            $table->decimal('largeur', 8, 2)->nullable();
+            $table->decimal('hauteur', 8, 2)->nullable();
+            $table->decimal('poids', 10, 2)->nullable(); // Rappel : c'est le poids total de la ligne
+            $table->decimal('volume_unitaire', 10, 4)->default(0); // Augmenté à 4 décimales pour la précision
+
+            // --- SECTION FINANCES DÉTAILLÉE ---
+            // 1. Ce que le client paie pour cet article (Total)
+            $table->decimal('prix_total_client', 10, 2)->default(0); 
+
+            // 2. Ce que l'entité (le transporteur) prend sur cet article
+            // (poids * tarif_kilo_revient) OU (volume * tarif_volume_revient)
+            $table->decimal('part_entite_item', 10, 2)->default(0);
+
+            // 3. Ce que le collecteur gagne sur cet article (Marge)
+            // (prix_total_client - part_entite_item)
+            $table->decimal('commission_col_item', 10, 2)->default(0);
+            // ----------------------------------
+
+            // Valeur CAF
+            $table->decimal('valeur_caf', 10, 2)->nullable()->default(0.00);
             
             // État et observations
             $table->enum('etat', ['bon_etat', 'defaut'])->default('bon_etat');
@@ -33,12 +45,9 @@ return new class extends Migration
             $table->string('photo_defaut_chemin')->nullable();
             $table->text('notes')->nullable();
             
-            // Timestamps
             $table->timestamps();
             
-            // Index
-            $table->index('evenement_id');
-            $table->index('article_id');
+            // Note : foreignId crée déjà les index, mais tu peux les laisser si tu préfères
         });
     }
 

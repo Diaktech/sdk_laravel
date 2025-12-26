@@ -55,4 +55,24 @@ class Client extends Model
     {
         return $this->belongsTo(Pays::class);
     }
+
+    public function groupes() 
+    {
+        return $this->belongsToMany(Groupe::class, 'groupe_client')
+            ->withPivot(['partage_par', 'approuve_par', 'date_approbation']);
+    }
+
+    // Collecteurs via les groupes
+    public function collecteursGroupes()
+    {
+        return $this->hasManyThrough(
+            Collecteur::class,
+            GroupeClient::class,
+            'client_id',     // Clé étrangère sur groupe_client
+            'id',            // Clé primaire sur collecteurs
+            'id',            // Clé primaire sur clients
+            'groupe_id'      // Clé étrangère sur groupe_client
+        )->whereHas('groupes'); // Seulement via les groupes
+    }
+
 }

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->decimal('longueur', 8, 2)->nullable();
             $table->decimal('largeur', 8, 2)->nullable();
             $table->decimal('hauteur', 8, 2)->nullable();
+            $table->decimal('volume_article', 10, 4)->nullable();
             $table->decimal('poids', 8, 3)->nullable();
             $table->boolean('mesures_fixes')->default(false);
             $table->boolean('est_pris_en_charge')->default(false);

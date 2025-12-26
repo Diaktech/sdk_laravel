@@ -23,39 +23,56 @@
                     <label for="depart_id" class="block text-sm font-medium text-gray-700 mb-2">
                         Sélectionnez un départ disponible *
                     </label>
-                    <select name="depart_id" id="depart_id" required
-                            class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-lg">
-                        <option value="">-- Choisir un départ --</option>
-                        @foreach($departs as $depart)
-                            <option value="{{ $depart->id }}" 
-                                    data-volume-max="{{ $depart->volume_maximal }}"
-                                    data-volume-actuel="{{ $depart->volume_actuel }}"
-                                    data-type-calcul="{{ $depart->type_calcul }}">
-                                🚚 {{ $depart->lieu_depart }} → {{ $depart->lieu_arrivee }}
-                                <span class="text-gray-600 text-sm">
-                                    ({{ $depart->type_prise_charge === 'domicile' ? 'Domicile' : 'Dépôt' }})
-                                </span>
-                                <span class="block text-sm text-gray-500 mt-1">
-                                    📦 {{ $depart->volume_actuel }}/{{ $depart->volume_maximal }} m³
-                                    | ⚖️ Calcul par {{ $depart->type_calcul }}
-                                </span>
-                            </option>
-                        @endforeach
-                    </select>
+                        <select name="depart_id" id="depart_id" required
+                                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 text-lg">
+                            <option value="">-- Choisir un départ --</option>
+                            @foreach($departs as $depart)
+                                @php
+                                    $dateDepart = \Carbon\Carbon::parse($depart->date_depart);
+                                    // diffInDays avec 'false' permet d'avoir le signe négatif si la date est passée
+                                    // On utilise (int) pour supprimer les décimales
+                                    $joursRestants = (int) \Carbon\Carbon::now()->startOfDay()->diffInDays($dateDepart->startOfDay(), false);
+                                    
+                                    if($joursRestants < 0) {
+                                        $delaiText = "Fermé";
+                                    } elseif($joursRestants == 0) {
+                                        $delaiText = "Aujourd'hui";
+                                    } else {
+                                        $delaiText = $joursRestants . " jrs";
+                                    }
+                                @endphp
+                                
+                                <option value="{{ $depart->id }}" 
+                                        data-volume-max="{{ $depart->volume_maximal }}"
+                                        data-volume-actuel="{{ $depart->volume_actuel }}"
+                                        data-type-calcul="{{ $depart->type_calcul }}">
+                                    
+                                    🚚 [{{ $dateDepart->format('d/m') }} | {{ $delaiText }}] 
+                                    {{ $depart->lieu_depart }} ➔ {{ $depart->lieu_arrivee }} 
+                                    ({{ $depart->type_calcul == 'poids' ? 'Kg' : 'm³' }}) 
+                                    [{{ number_format($depart->volume_actuel, 1) }}/{{ (int)$depart->volume_maximal }}]
+                                    
+                                </option>
+                            @endforeach
+                        </select>
                     @error('depart_id')
                         <p class="text-red-500 text-sm mt-2">{{ $message }}</p>
                     @enderror
                 </div>
                 
                 <!-- Capacité restante -->
-                <div class="mt-4 pt-4 border-t border-blue-100">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">Capacité restante :</span>
-                        <span id="capacite-restante" class="font-semibold">-- m³</span>
+                <div id="statut-remplissage-container" class="mt-4 p-4 rounded-xl border-2 border-dashed border-gray-200 transition-all duration-300">
+                    <div class="flex flex-col items-center justify-center space-y-1">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Taux d'occupation</span>
+                        
+                        <div id="capacite-percent" class="text-4xl font-black text-gray-400">0%</div>
+                        
+                        <div id="capacite-restante" class="text-sm font-medium text-gray-600">-- / -- m³</div>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div id="barre-progression" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
-                    </div>
+                </div>
+
+                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-3">
+                    <div id="barre-progression" class="bg-gray-400 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
             </div>
             
@@ -77,7 +94,55 @@
                     <label for="client_search" class="block text-sm font-medium text-gray-700 mb-2">
                         Rechercher un client *
                     </label>
-                    
+
+                    <!-- ==================== BOUTONS DE FILTRE ==================== -->
+                    <div class="mb-4">
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <!-- Bouton par défaut (clients directs) -->
+                            <button type="button" 
+                                    id="btn-clients-directs"
+                                    class="filter-btn active px-4 py-2 bg-purple-100 border-2 border-purple-500 text-purple-700 rounded-lg font-medium text-sm hover:bg-purple-200 transition-all duration-200 shadow-sm">
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Mes clients
+                                </span>
+                            </button>
+                            
+                            <!-- Bouton clients de groupe -->
+                            <button type="button" 
+                                    id="btn-clients-groupe"
+                                    class="filter-btn px-4 py-2 bg-gray-100 border-2 border-gray-300 text-gray-600 rounded-lg font-medium text-sm hover:bg-gray-200 transition-all duration-200 shadow-sm">
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M13 6a3 3 0 11-6 0 3 3 0 016 0zm-8 9a3 3 0 100-6 3 3 0 000 6zm10 0a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Clients du groupe
+                                </span>
+                            </button>
+                            
+                            <!-- Bouton clients partagés -->
+                            <button type="button" 
+                                    id="btn-clients-partages"
+                                    class="filter-btn px-4 py-2 bg-gray-100 border-2 border-gray-300 text-gray-600 rounded-lg font-medium text-sm hover:bg-gray-200 transition-all duration-200 shadow-sm">
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Clients partagés
+                                </span>
+                            </button>
+                        </div>
+                        
+                        <!-- Indicateur du filtre actif -->
+                        <div class="text-xs text-gray-500 mt-1 px-1">
+                            <span class="font-semibold" id="filtre-type">Mes clients</span>
+                            <span class="text-gray-400"> • Recherche dans vos clients directs</span>
+                        </div>
+                    </div>
+                    <!-- ==================== FIN BOUTONS FILTRE ==================== -->
+
                     <!-- Champ caché pour l'ID du client (pour le formulaire) -->
                     <input type="hidden" id="client_id" name="client_id" value="">
                     
@@ -156,6 +221,35 @@
             <!-- FIN NOUVELLE SECTION                       -->
             <!-- =========================================== -->
             
+
+            <!-- Après la recherche client -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                <!-- Bouton par défaut (clients directs) -->
+                <button type="button" 
+                        id="btn-clients-directs"
+                        class="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium text-sm hover:bg-purple-700 transition">
+                    Mes clients directs
+                </button>
+                
+                <!-- Bouton clients de groupe -->
+                <button type="button" 
+                        id="btn-clients-groupe"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition">
+                    Afficher les clients de mon groupe
+                </button>
+                
+                <!-- Bouton clients partagés -->
+                <button type="button" 
+                        id="btn-clients-partages"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition">
+                    Afficher les clients partagés
+                </button>
+            </div>
+
+            <!-- Indicateur actif -->
+            <div id="filtre-actif" class="mb-4 text-sm text-gray-600">
+                Affichage : <span class="font-semibold" id="filtre-type">Mes clients directs</span>
+            </div>
         </div>
         
         <!-- Colonne droite : Destinataire et Type de prise en charge -->
