@@ -37,7 +37,7 @@ return new class extends Migration
             $table->decimal('tarif_kilo_vente_defaut', 10, 2)->default(5.00); 
 
             //Majoration en fonction de la zone de récupération des colis, paramétré par le gestionnaire 
-            $blueprint->decimal('majoration_domicile', 10, 2)->default(0.00);
+            $table->decimal('majoration_domicile', 10, 2)->default(0.00);
             
             // 3. DROITS DU COLLECTEUR
             // 1 = Il saisit ce qu'il veut | 0 = On impose le 'tarif_kilo_vente_defaut'

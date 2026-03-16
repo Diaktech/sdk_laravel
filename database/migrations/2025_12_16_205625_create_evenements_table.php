@@ -19,6 +19,7 @@ return new class extends Migration
             
             // Métadonnées
             $table->string('code_unique')->unique(); // EXP2025001
+            //Mettre l'ancien numéro d'evenement
             $table->enum('type_prise_charge', ['depot', 'domicile'])->default('depot');
             $table->enum('statut', ['en_attente', 'valide', 'attente_correction', 'annule', 'termine'])->default('en_attente');
             $table->enum('priorite', ['basse', 'normale', 'haute', 'urgente'])->default('normale');
@@ -30,6 +31,11 @@ return new class extends Migration
             $table->decimal('volume_total', 10, 3)->default(0); // m³
             $table->decimal('poids_total', 10, 2)->default(0); // kg
             $table->decimal('montant_total', 12, 2)->default(0);
+            // Partie Promotion
+            $table->decimal('reduction_promotionnelle', 10, 2)->default(0);
+            $table->foreignId('promo_id')->nullable()->constrained('reduction_promotionnelles')->nullOnDelete();
+
+            $table->boolean('contient_des_lots')->default(false);
             $table->decimal('part_entite', 12, 2)->default(0);
             $table->decimal('commission_col', 12, 2)->default(0);
             $table->decimal('prix_kilo', 8, 2)->nullable(); // 3.00 ou 3.50

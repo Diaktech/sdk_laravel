@@ -17,6 +17,7 @@ return new class extends Migration
             
             // Quantité et mesures
             $table->integer('quantite')->default(1);
+            $table->boolean('is_lot')->default(false);
             $table->decimal('longueur', 8, 2)->nullable();
             $table->decimal('largeur', 8, 2)->nullable();
             $table->decimal('hauteur', 8, 2)->nullable();
@@ -40,7 +41,7 @@ return new class extends Migration
             $table->decimal('valeur_caf', 10, 2)->nullable()->default(0.00);
             
             // État et observations
-            $table->enum('etat', ['bon_etat', 'defaut'])->default('bon_etat');
+            $table->enum('etat', ['neuf','bon_etat', 'defaut', 'HS'])->default('bon_etat');
             $table->text('notes_defaut')->nullable();
             $table->string('photo_defaut_chemin')->nullable();
             $table->text('notes')->nullable();

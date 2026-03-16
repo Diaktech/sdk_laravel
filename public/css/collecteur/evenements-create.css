@@ -53,6 +53,10 @@
 }
 
 /* ==================== BOUTONS DE NAVIGATION ==================== */
+#btn-valider{
+    background-color: green !important;
+}
+
 .btn-precedent,
 .btn-suivant,
 .btn-valider {
@@ -406,4 +410,27 @@ thead th {
     min-height: 12px;
     display: flex;
     align-items: center;
+}
+
+
+/* Force les images dans les badges à ne pas dépasser 32px */
+    #photos-grid-container img {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        max-height: none !important;
+    }
+    /* Force le conteneur de l'image à rester petit */
+    #photos-grid-container .w-8.h-8 {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.9); }
+}
+.animate-fadeOut {
+    animation: fadeOut 0.2s ease-out forwards;
 }

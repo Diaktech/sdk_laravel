@@ -385,6 +385,8 @@
                 
                 <!-- Champ caché pour type_prise_charge (valeur par défaut pour volume) -->
                 <input type="hidden" name="type_prise_charge" value="depot">
+
+                <input type="hidden" name="zone_id" id="zone_id" value="">
             </div>
 
         </div> <!-- Fermeture Colonne droite -->

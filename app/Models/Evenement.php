@@ -23,6 +23,9 @@ class Evenement extends Model
         'volume_total',
         'poids_total',
         'montant_total',
+        'reduction_promotionnelle',
+        'promo_id',
+        'contient_des_lots',
         'part_entite',
         'commission_col',
         'prix_kilo',
@@ -94,25 +97,16 @@ class Evenement extends Model
         return $query->where('statut', 'en_attente');
     }
 
+    public function promo()
+    {
+        return $this->belongsTo(ReductionPromotionnelle::class, 'promo_id');
+    }
+
     // Scope pour les événements validés
     public function scopeValides($query)
     {
         return $query->where('statut', 'valide');
     }
-
-    public function calculerTotaux()
-    {
-        // On recharge les items pour être sûr d'avoir les dernières valeurs en mémoire
-        $this->load('items');
-
-        $this->update([
-            'montant_total'  => $this->items->sum('prix_total_client'),
-            'part_entite'    => $this->items->sum('part_entite_item'),    // Somme des parts figées par ligne
-            'commission_col' => $this->items->sum('commission_col_item'), // Somme des gains figés par ligne
-            'poids_total'    => $this->items->sum('poids'),
-            'volume_total'   => $this->items->sum('volume_unitaire'),
-        ]);
-    }
-
+    
 
 }

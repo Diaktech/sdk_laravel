@@ -87,7 +87,7 @@
                             Suivant →
                         </button>
                         
-                        <button type="submit" id="btn-valider" class="btn-valider hidden bg-green-600 hover:bg-green-800 text-white font-bold py-3 px-8 rounded-lg transition duration-200">
+                        <button type="button" id="btn-valider" onclick="window.formulaireEvenement.validerEtEnvoyer()" class="btn-valider hidden bg-green-600 hover:bg-green-800 text-white font-bold py-3 px-8 rounded-lg transition duration-200">
                             ✅ Valider la prise en charge
                         </button>
                     </div>
@@ -124,4 +124,21 @@
             window.collecteurCanEditPrix = {{ $collecteur->peut_modifier_tarif_vente ? 'true' : 'false' }};
         </script>
     @endpush
+
+
+
+<div id="global-loader" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-[9999] flex flex-col items-center justify-center">
+    <div class="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center">
+        <svg class="animate-spin h-12 w-12 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-gray-700 font-bold">Enregistrement en cours...</span>
+        <span class="text-gray-500 text-xs mt-2">Vérification des données sécurisée</span>
+    </div>
+</div>
+
+
+
+
 </x-app-layout>

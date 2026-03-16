@@ -13,6 +13,7 @@ class ItemEvenement extends Model
         'evenement_id',
         'article_id',
         'quantite',
+        'is_lot',
         'longueur',
         'largeur',
         'hauteur',

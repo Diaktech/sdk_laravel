@@ -47,7 +47,6 @@ class InitialDataSeeder extends Seeder
             ['code' => 'TS'],
             [
                 'nom' => 'Terranga Services',
-                'majoration_domicile' => 0.50,
                 'email_contact' => 'contact@terrangaservices.com',
                 'telephone_contact' => '+221 33 123 45 67',
             ]
@@ -116,6 +115,7 @@ class InitialDataSeeder extends Seeder
                 'tarif_volume_revient' => 280.00,
                 'tarif_kilo_revient' => 3.50,
                 'tarif_kilo_vente_defaut' => 5.50,
+                'majoration_domicile' => 0.50,
                 'peut_modifier_tarif_vente' => true,
                 
                 'est_bloque' => false,

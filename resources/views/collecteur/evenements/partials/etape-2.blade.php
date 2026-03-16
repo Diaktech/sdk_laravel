@@ -80,11 +80,11 @@
 
             <div class="flex flex-col space-y-1 pt-2 border-t border-slate-800">
                 <div class="flex items-center space-x-2">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Poids Total :</span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Poids Total : </span>
                     <span id="total-poids-display" class="text-sm font-bold text-slate-300">0.00 kg</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Quantité :</span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Quantité : </span>
                     <span id="total-qte-display" class="text-sm font-bold text-slate-300">0</span>
                 </div>
             </div>
@@ -112,3 +112,27 @@
     <label class="block text-sm font-bold text-gray-700 mb-2">Commentaire général sur l'envoi</label>
     <textarea id="commentaire_general" name="commentaire_general" rows="2" class="w-full border rounded-lg p-2 text-sm" placeholder="Observations particulières..."></textarea>
 </div>
+
+
+<div class="mt-6 px-2">
+    <div class="flex items-center justify-between mb-3">
+        <label class="text-xs font-black uppercase text-gray-700 tracking-widest">
+            Galerie des captures
+        </label>
+        <span id="photo-counter" class="px-2 py-1 text-[10px] font-bold text-blue-600 bg-blue-50 rounded-full">
+            (0)
+        </span>
+    </div>
+    
+    <div id="photos-grid-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+        
+        <div id="no-photos-message" class="col-span-full flex flex-col items-center justify-center py-8 text-gray-400 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+            <svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span class="text-[10px] font-medium">En attente de captures...</span>
+        </div>
+    </div> 
+</div>
+
+<input type="file" id="global-camera-input" accept="image/*" capture="environment" style="display: none;">
